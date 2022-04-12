@@ -14,6 +14,7 @@ var render = Render.create({
   element: document.body,
   engine: engine,
 });
+// Matter.Render.setPixelRatio(render, 20);
 
 let earth = Bodies.circle(600, 300, 5, 5);
 Matter.Body.setDensity(earth, 1408);
