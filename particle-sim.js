@@ -8,20 +8,22 @@ var Engine = Matter.Engine,
 // create an engine
 var engine = Engine.create();
 
+engine.gravity.y = 0;
 // create a renderer
 var render = Render.create({
   element: document.body,
   engine: engine,
 });
 
-//create sun
-let sun = Bodies.circle(400, 300, 50, 50);
-Matter.Body.setDensity(sun, 1408);
-Matter.Body.setMass(sun, 1988500);
-
 let earth = Bodies.circle(600, 300, 5, 5);
 Matter.Body.setDensity(earth, 1408);
 Matter.Body.setMass(earth, 5514);
+
+//create sun
+let sun = Matter.Bodies.circle(400, 300, 50, 50);
+Matter.Body.setDensity(sun, 1408);
+Matter.Body.setMass(sun, 1988500);
+Matter.Body.setStatic(sun, true);
 
 // add all of the bodies to the world
 Composite.add(engine.world, [sun, earth]);
@@ -35,42 +37,38 @@ var runner = Runner.create();
 // run the engine
 Runner.run(runner, engine);
 
-engine.gravity.y = 0;
-
-Matter.Events.on(runner, "tick", () => {
-  // let angleBetweenEarthAndSun = () => {
-  //   angle = Math.atan(
-  //     earth.position.y - sun.position.y,
-  //     earth.position.x - sun.position.x
-  //   );
-  //   console.log(angle);
-  // };
-  // angleBetweenEarthAndSun();
-  //runs every tick or frame
-  Matter.Body.applyForce(
-    earth,
-    Matter.Vector.sub(sun.position, earth.position),
-    Matter.Vector.create(
-      -calculateForceOfGravity() * 10,
-      -calculateForceOfGravity() * 10
-    )
-  );
-
-  console.log(calculateForceOfGravity());
-});
-
 let calculateRadius = () => {
   //calculate distance
-  let distance = Math.sqrt(
+  let radius = Math.sqrt(
     Math.abs(
       ((earth.position.x - sun.position.x) ^ 2) +
         ((earth.position.y - sun.position.y) ^ 2)
     )
   );
 
-  return distance;
+  return radius;
 };
 
 let calculateForceOfGravity = () => {
   return Math.sqrt(((6.67 / 1e11) * sun.mass) / calculateRadius());
 };
+
+Matter.Events.on(runner, "tick", () => {
+  let targetAngle = Matter.Vector.angle(earth.position, sun.position);
+  let force = 0.03;
+
+  Matter.Body.applyForce(earth, earth.position, {
+    x: Math.cos(targetAngle) * force,
+    y: Math.sin(targetAngle) * force,
+  });
+
+  let horizontalForce = 0.07;
+  Matter.Body.applyForce(
+    earth,
+    earth.position,
+    Matter.Vector.perp({
+      x: Math.cos(targetAngle) * horizontalForce,
+      y: Math.sin(targetAngle) * horizontalForce,
+    })
+  );
+});
